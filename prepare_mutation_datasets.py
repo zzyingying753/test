@@ -78,6 +78,12 @@ def get_tumor_type(other, other2tcga, tcga_cancers):
     else:
         return other
 
+def get_sample_types(tsb, types = ["01", "03", "09"]):
+    if tsb.split("-")[3][0:2] in types:
+        return True
+    else:
+        return False
+
 #---------------------------------------------------------------------------------------------------------------------
 # COSMIC
 
@@ -177,7 +183,12 @@ df_vep["Start_Position"] = df_vep["Start_Position"].astype(int)
 df_vep = df_vep.sort_values(by = ["Chromosome", "Start_Position"])
 df_vep[["vep_input"]].drop_duplicates().to_csv(dirname + "/mutations/VEP_input_Chang.txt", sep = "\t", header = None, index = None)
 cols = ["NCBI_Build", "Chromosome", "Start_Position", "End_Position", "Strand", "Reference_Allele", "Tumor_Seq_Allele1", "Tumor_Seq_Allele2", "Tumor_Sample_Barcode"]
+
+# retain primary tumors in TCGA
 df_tcga = pd.concat([df1[df1["Tumor_Sample_Barcode"].isin(added_samples)][cols], df2[cols]]).drop_duplicates()
+df_tcga = df_tcga[df_tcga["Tumor_Sample_Barcode"].apply(get_sample_types)]
+
+# annotate tumor types
 df_tcga["TUMORTYPE"] = df_tcga["Tumor_Sample_Barcode"].apply(lambda x: case2project["-".join(x.split("-")[0:3])])
 df_tcga.dropna(subset = ["TUMORTYPE"]).to_csv(dirname + "/mutations/TCGA.maf", sep = "\t", header = True, index = None)
 df_non_tcga = df1[df1["Tumor_Sample_Barcode"].isin(non_tcga_samples)]
