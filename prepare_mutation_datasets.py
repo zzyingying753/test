@@ -154,6 +154,13 @@ for x in case:
         if y["submitter_id"][0:4] == "TCGA":
             tcga_samples = tcga_samples.union({y["submitter_id"][0:len("TCGA-02-0003-01")]})
 
+# load case information
+with open(dirname + "/mutations/cases.2023-07-30.json") as f:
+    data = json.load(f)
+    case2project = defaultdict(lambda: np.nan)
+    for x in data:
+        case2project[x["submitter_id"]] = x["project"]["project_id"]
+
 # split TCGA and non-TCGA samples
 new_samples = {x[0:len("TCGA-02-0003-01")] for x in df2["Tumor_Sample_Barcode"]}
 old_samples = set()
@@ -171,7 +178,8 @@ df_vep = df_vep.sort_values(by = ["Chromosome", "Start_Position"])
 df_vep[["vep_input"]].drop_duplicates().to_csv(dirname + "/mutations/VEP_input_Chang.txt", sep = "\t", header = None, index = None)
 cols = ["NCBI_Build", "Chromosome", "Start_Position", "End_Position", "Strand", "Reference_Allele", "Tumor_Seq_Allele1", "Tumor_Seq_Allele2", "Tumor_Sample_Barcode"]
 df_tcga = pd.concat([df1[df1["Tumor_Sample_Barcode"].isin(added_samples)][cols], df2[cols]]).drop_duplicates()
-df_tcga.to_csv(dirname + "/mutations/TCGA.maf", sep = "\t", header = True, index = None)
+df_tcga["TUMORTYPE"] = df_tcga["Tumor_Sample_Barcode"].apply(lambda x: case2project["-".join(x.split("-")[0:3])])
+df_tcga.dropna(subset = ["TUMORTYPE"]).to_csv(dirname + "/mutations/TCGA.maf", sep = "\t", header = True, index = None)
 df_non_tcga = df1[df1["Tumor_Sample_Barcode"].isin(non_tcga_samples)]
 other2tcga = {'hgg': 'gbm', 'pias': 'lgg', 'lusm': 'lusc', 'mcl': 'dlbc', 'all': 'dlbc', 'lymbc': 'dlbc', 'cll': 'dlbc', 'cscc': 'skcm', 'coadread': 'coad', 'mmyl': 'laml', 'mds': 'laml', 'acyc': 'hnsc', 'npc': 'hnsc', 'gbc': 'chol'}
 tcga_cancers = {x.split(".")[0].split("-")[1].lower().split("_")[0] for x in os.listdir(dirname + "/transcriptome_profiles/parsed_files")}
