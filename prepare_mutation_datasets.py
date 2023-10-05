@@ -191,11 +191,11 @@ df_tcga = df_tcga[df_tcga["Tumor_Sample_Barcode"].apply(get_sample_types)]
 # annotate tumor types
 df_tcga["TUMORTYPE"] = df_tcga["Tumor_Sample_Barcode"].apply(lambda x: case2project["-".join(x.split("-")[0:3])])
 df_tcga.dropna(subset = ["TUMORTYPE"]).to_csv(dirname + "/mutations/TCGA.maf", sep = "\t", header = True, index = None)
-df_non_tcga = df1[df1["Tumor_Sample_Barcode"].isin(non_tcga_samples)]
+df_non_tcga = df1[df1["Tumor_Sample_Barcode"].isin(non_tcga_samples)][cols]
 other2tcga = {'hgg': 'gbm', 'pias': 'lgg', 'lusm': 'lusc', 'mcl': 'dlbc', 'all': 'dlbc', 'lymbc': 'dlbc', 'cll': 'dlbc', 'cscc': 'skcm', 'coadread': 'coad', 'mmyl': 'laml', 'mds': 'laml', 'acyc': 'hnsc', 'npc': 'hnsc', 'gbc': 'chol'}
 tcga_cancers = {x.split(".")[0].split("-")[1].lower().split("_")[0] for x in os.listdir(dirname + "/transcriptome_profiles/parsed_files")}
 df_non_tcga["TUMORTYPE"] = df_non_tcga["TUMORTYPE"].apply(lambda x: get_tumor_type(x, other2tcga, tcga_cancers))
-df_non_tcga[cols].to_csv(dirname + "/mutations/non_TCGA.maf", sep = "\t", header = True, index = None)
+df_non_tcga.to_csv(dirname + "/mutations/non_TCGA.maf", sep = "\t", header = True, index = None)
 
 VEP_output = {
 "all_chang": "http://grch37.ensembl.org/Homo_sapiens/Download/Tools/VEP\?format\=vcf\;tl\=CqH9IoEytqzMOuP8\-9542574",
