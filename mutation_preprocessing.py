@@ -27,7 +27,7 @@ import random
 import networkx as nx
 
 def get_hugo_symbol(row, ensg2symbol):
-	if ensg2symbol[row["Gene"]] != set():
+	if row["Gene"] in ensg2symbol and ensg2symbol[row["Gene"]] != set():
 		return list(ensg2symbol[row["Gene"]])[0]
 	else:
 		return row["SYMBOL"]
