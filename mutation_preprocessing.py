@@ -53,6 +53,7 @@ def mutation_preprocessing(maf_file, vep_file, mapping_flag, af_cutoff, output):
 	ensg2symbol = all_function_py3.gene_ID_conversion(df_vep["Gene"].dropna().unique().tolist(), convert_from = "ensembl.gene", convert_to = "symbol", species = "human")
 	df_vep["Hugo_Symbol"] = df_vep.apply(lambda x: get_hugo_symbol(x, ensg2symbol), axis = 1)
 	df_map = pd.merge(df, df_vep, on = "#Uploaded_variation")
+	print(df_map.columns)
 
 	# exclude unexpressed mutations
 	tumor2gene = {}
@@ -64,6 +65,7 @@ def mutation_preprocessing(maf_file, vep_file, mapping_flag, af_cutoff, output):
 			for gene in tumor2gene[cancer]:
 				gene2cancers[gene] = gene2cancers[gene].union({cancer})
 	pancan_genes = {gene for gene in gene2cancers if len(gene2cancers[gene]) / len(tumor2gene) >= 0.8}
+	print(df_map.columns)
 	df1 = df_map[df_map["Hugo_Symbol"].isin(specific_genes)]
 	df2 = df_map[~df_map["Hugo_Symbol"].isin(specific_genes)]
 	df2_known = df2[df2["TUMORTYPE"].isin(tumor2gene)]
@@ -81,7 +83,8 @@ def mutation_preprocessing(maf_file, vep_file, mapping_flag, af_cutoff, output):
 	for tumor in df2_known["TUMORTYPE"].unique():
 		expr_genes.extend(tumor2gene[tumor])
 	expr_genes = set(expr_genes).union(pancan_genes)
-	pd.DataFrame({"Gene": sorted(expr_genes)}).to_csv(output.replace(".txt", "expr.txt"), sep = "\t", header = None, index = None)
+	pd.DataFrame({"Gene": sorted(expr_genes)}).to_csv(output.replace(".maf", ".expr"), sep = "\t", header = None, index = None)
+	return
 
 
 for mapping_flag in ["single", "all"]:
