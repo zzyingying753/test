@@ -134,7 +134,7 @@ for mapping in ["single", "all"]:
             else:
                 mode = "a+"
             all_function_py3.parse_VEP_output(dirname + "/mutations/COSMIC/VEP_output/" + file, \
-                dirname + "/mutations/COSMIC/parsed_" + mapping + ".txt", mode = mode)
+                dirname + "/mutations/COSMIC/parsed_" + mapping + ".txt", mode = mode, cols = ["SWISSPROT", "Consequence", "SYMBOL", "Gene", "Feature_type", "Feature", "BIOTYPE", "EXON", "HGVSc", "HGVSp", "Protein_position", "Amino_acids", "Codons", "ENSP", "SIFT", "PolyPhen", "gnomADe_AF", "CADD_PHRED", "CADD_RAW", "MPC"])
 
 
 
@@ -219,6 +219,6 @@ for mapping in ["single", "all"]:
           else:
               mode = "a+"
           all_function_py3.parse_VEP_output(dirname + "/mutations/VEP_output/" + file, \
-              dirname + "/mutations/parsed_" + mapping + ".txt", mode = mode)
+              dirname + "/mutations/parsed_" + mapping + ".txt", mode = mode, cols = ["SWISSPROT", "Consequence", "SYMBOL", "Gene", "Feature_type", "Feature", "BIOTYPE", "EXON", "HGVSc", "HGVSp", "Protein_position", "Amino_acids", "Codons", "ENSP", "SIFT", "PolyPhen", "gnomADe_AF", "CADD_PHRED", "CADD_RAW", "MPC"])
   df = pd.read_csv(dirname + "/mutations/parsed_" + mapping + ".txt", sep = "\t", dtype = str).drop_duplicates()
   df.to_csv(dirname + "/mutations/parsed_" + mapping + ".txt", sep = "\t", header = True, index = None)
