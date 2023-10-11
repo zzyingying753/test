@@ -27,14 +27,20 @@ import random
 import networkx as nx
 
 def shuffle_protein_position(row, pro2seq, enst2orf, orf2seq):
-    random_pos = random.choice(list(range(1, len(pro2seq[row["UniProt"]]) + 1)))
-    orf = enst2orf[row["Transcript_ID"].split(".")[0]]
-    if type(orf) == str and orf2seq[orf] == pro2seq[row["UniProt"]]:
-        codon = orf[(3 * (random_pos - 1)) : (3 * random_pos)]
-    else:
-        logging.warning("Unable to identify the codon. The original codon is used instead.")
-        codon = row["Codons"]
-    return [random_pos, codon]
+	if row["UniProt"] in pro2seq:
+		random_pos = random.choice(list(range(1, len(pro2seq[row["UniProt"]]) + 1)))
+		orf = enst2orf[row["Transcript_ID"].split(".")[0]]
+		if type(orf) == str and orf2seq[orf] == pro2seq[row["UniProt"]]:
+			codon = orf[(3 * (random_pos - 1)) : (3 * random_pos)]
+		else:
+			# logging.warning("Unable to identify the codon! The original codon is used instead.")
+			codon = row["Codons"]
+	else:
+		# logging.warning("Unable to find the sequence of " + row["UniProt"] + "! Permutation is not performed.")
+		random_pos = row["Protein_position"]
+		codon = row["Codons"]
+	
+	return [random_pos, codon]
 
 # command = "python " + dirname + "/NetFlow3D/NetFlow3D.py -m " + dirname + "/mutations/TCGA_preprocessed_single.maf \
 # -R low -I TCGA -t 50 -X " + dirname + "/mutations/TCGA_preprocessed_single.expr"
@@ -48,22 +54,22 @@ df_inframe = df_mut[df_mut["Variant_Classification"].isin(inframe)]
 # permutations
 
 with open(dirname + "/NetFlow3D/metadata/uniprot2proseq.json") as f:
-    pro2seq = json.load(f)
+	pro2seq = json.load(f)
 enst2orf = {}
 for x in {y.split(".")[0] for y in df_inframe["Transcript_ID"].unique()}:
-    enst2orf[x] = all_function_py3.get_orf_from_transcript(x)
+	enst2orf[x] = all_function_py3.get_orf_from_transcript(x)
 orf2seq = {}
 for x in set(enst2orf.values()):
-    if type(x) == str:
-        orf2seq[x] = all_function_py3.get_proseq_from_orf(x)
+	if type(x) == str:
+		orf2seq[x] = all_function_py3.get_proseq_from_orf(x)
 
 for i in range(100):
 	permu_file = dirname + "/permutations/round_" + str(i + 1) + ".txt"
-    df_inframe[["Protein_position_shuffled", "Codons_shuffled"]] = pd.DataFrame(df_inframe.apply(lambda x: shuffle_protein_position(x, pro2seq, enst2orf, orf2seq), axis = 1).tolist(), index = df_inframe.index)
-    df_inframe[["Tumor_Sample_Barcode", "SYMBOL", "Gene", "Transcript_ID", "Protein_position_shuffled", "Codons_shuffled", "ENSP", "Variant_Classification", "Hugo_Symbol", "UniProt"]].rename(columns = {"Protein_position_shuffled": "Protein_position", "Codons_shuffled": "Codons"}).to_csv(permu_file, sep = "\t", header = True, index = None)
-    command = "python " + dirname + "/NetFlow3D/NetFlow3D.py -m " + permu_file + " -R low -I round_" + str(i + 1) + \
-    " -t 50 -X " + dirname + "/mutations/TCGA_preprocessed_single.expr -o " + dirname + "/permutations/ -N"
-    os.system(command)
+	df_inframe[["Protein_position_shuffled", "Codons_shuffled"]] = pd.DataFrame(df_inframe.apply(lambda x: shuffle_protein_position(x, pro2seq, enst2orf, orf2seq), axis = 1).tolist(), index = df_inframe.index)
+	df_inframe[["Tumor_Sample_Barcode", "SYMBOL", "Gene", "Transcript_ID", "Protein_position_shuffled", "Codons_shuffled", "ENSP", "Variant_Classification", "Hugo_Symbol", "UniProt"]].rename(columns = {"Protein_position_shuffled": "Protein_position", "Codons_shuffled": "Codons"}).to_csv(permu_file, sep = "\t", header = True, index = None)
+	command = "python " + dirname + "/NetFlow3D/NetFlow3D.py -m " + permu_file + " -R low -I round_" + str(i + 1) + \
+	" -t 50 -X " + dirname + "/mutations/TCGA_preprocessed_single.expr -o " + dirname + "/permutations/ -N"
+	os.system(command)
 
 
 
